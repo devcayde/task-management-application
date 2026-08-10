@@ -30,12 +30,13 @@ export function TaskFilter() {
       params.set("status", value);
     }
 
-    // Reset pagination when filter changes
+    // Reset pagination when the filter changes
     params.delete("page");
 
     const query = params.toString();
+    const newUrl = query ? `${pathname}?${query}` : pathname;
 
-    router.push(`${pathname}${query ? `?${query}` : ""}`);
+    router.replace(newUrl);
   }
 
   return (
