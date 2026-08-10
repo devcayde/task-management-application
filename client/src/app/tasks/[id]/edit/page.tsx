@@ -1,13 +1,12 @@
-import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
-import { getTask, updateTask } from "@/actions/task.actions";
-
+import { getTask } from "@/task-db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
+import EditTaskForm from "../task-edit-form";
 
 interface EditTaskPageProps {
   params: Promise<{
@@ -18,39 +17,17 @@ interface EditTaskPageProps {
 export default async function EditTaskPage({ params }: EditTaskPageProps) {
   const { id } = await params;
 
-  let task;
+  const task = await getTask(id);
 
-  try {
-    task = await getTask(id);
-  } catch {
+  if (!task) {
     notFound();
-  }
-
-  async function handleUpdateTask(formData: FormData) {
-    "use server";
-
-    const title = formData.get("title") as string;
-
-    const description = formData.get("description") as string;
-
-    const status = formData.get("status") as
-      | "ACTIVE"
-      | "INACTIVE"
-      | "COMPLETED";
-
-    await updateTask(id, {
-      title,
-      description,
-      status,
-    });
-
-    redirect(`/tasks/${id}`);
   }
 
   return (
     <main className="container mx-auto max-w-2xl px-6 py-10">
-      <Button variant="ghost" className="mb-6">
-        <Link href={`/tasks/${id}`}>← Back</Link>
+      <Button variant="ghost" className="mb-6" render={<Link href="/tasks" />}>
+        <ArrowLeft data-icon="inline-start" />
+        Back to tasks
       </Button>
 
       <Card>
@@ -59,47 +36,7 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
         </CardHeader>
 
         <CardContent>
-          <form action={handleUpdateTask} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-
-              <Input
-                id="title"
-                name="title"
-                defaultValue={task.title}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-
-              <Textarea
-                id="description"
-                name="description"
-                defaultValue={task.description ?? ""}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-
-              <select
-                id="status"
-                name="status"
-                defaultValue={task.status}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              >
-                <option value="ACTIVE">Active</option>
-
-                <option value="INACTIVE">Inactive</option>
-
-                <option value="COMPLETED">Completed</option>
-              </select>
-            </div>
-
-            <Button type="submit">Save Changes</Button>
-          </form>
+          <EditTaskForm task={task} />
         </CardContent>
       </Card>
     </main>

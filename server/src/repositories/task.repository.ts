@@ -24,10 +24,10 @@ export default class TaskRepo {
     const where: Prisma.TaskWhereInput = {};
 
     if (search) {
-      where.title = {
-        contains: search,
-        mode: "insensitive",
-      };
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ];
     }
 
     if (status) {
