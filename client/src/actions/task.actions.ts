@@ -1,95 +1,79 @@
 "use server";
 
-import { api } from "@/lib/api";
-import { ApiResponse, Task, TaskListResponse, TaskStatus } from "@/types/task";
+import {
+  addTask,
+  deleteTask,
+  toggleTaskComplete,
+  updateTask,
+} from "@/task-db";
+import { TaskStatus } from "@/types/task";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
-interface GetTasksParams {
-  search?: string;
-  status?: TaskStatus;
-  page?: number;
-  limit?: number;
-}
-
-interface CreateTaskInput {
-  title: string;
-  description?: string;
-}
-
-interface UpdateTaskInput {
+export type Errors = {
   title?: string;
   description?: string;
-  status?: TaskStatus;
-}
+  status?: string;
+};
 
-export async function getTasks(
-  params: GetTasksParams = {},
-): Promise<TaskListResponse> {
-  const searchParams = new URLSearchParams();
+export type FormState = {
+  errors: Errors;
+};
 
-  if (params.search) {
-    searchParams.set("search", params.search);
+export async function createTask(prevState: FormState, formData: FormData) {
+  const title = formData.get("title") as string;
+  const description = formData.get("description") as string;
+
+  const errors: Errors = {};
+
+  if (!title?.trim()) {
+    errors.title = "Title is required";
   }
 
-  if (params.status) {
-    searchParams.set("status", params.status);
+  if (Object.keys(errors).length > 0) {
+    return { errors };
   }
 
-  if (params.page) {
-    searchParams.set("page", String(params.page));
-  }
+  await addTask(title, description ?? "");
 
-  if (params.limit) {
-    searchParams.set("limit", String(params.limit));
-  }
-
-  const query = searchParams.toString();
-
-  const response = await api<ApiResponse<TaskListResponse>>(
-    `/tasks${query ? `?${query}` : ""}`,
-  );
-
-  return response.message;
+  redirect("/tasks");
 }
 
-export async function getTask(id: string): Promise<Task> {
-  const response = await api<ApiResponse<Task>>(`/tasks/${id}`);
-
-  return response.message;
-}
-
-export async function createTask(input: CreateTaskInput): Promise<Task> {
-  const response = await api<ApiResponse<Task>>("/tasks", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-
-  return response.message;
-}
-
-export async function updateTask(
+export async function editTask(
   id: string,
-  input: UpdateTaskInput,
-): Promise<Task> {
-  const response = await api<ApiResponse<Task>>(`/tasks/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(input),
-  });
+  prevState: FormState,
+  formData: FormData,
+) {
+  const title = formData.get("title") as string;
+  const description = formData.get("description") as string;
+  const status = formData.get("status") as TaskStatus;
 
-  return response.message;
+  const errors: Errors = {};
+
+  if (!title?.trim()) {
+    errors.title = "Title is required";
+  }
+
+  if (!status) {
+    errors.status = "Status is required";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { errors };
+  }
+
+  await updateTask(id, title, description ?? "", status);
+
+  redirect("/tasks");
 }
 
-export async function toggleTask(id: string): Promise<Task> {
-  const response = await api<ApiResponse<Task>>(`/tasks/${id}/toggle`, {
-    method: "PATCH",
-  });
-
-  return response.message;
+export async function removeTask(id: string) {
+  await deleteTask(id);
+  revalidatePath("/tasks");
 }
 
-export async function deleteTask(id: string): Promise<string> {
-  const response = await api<ApiResponse<string>>(`/tasks/${id}`, {
-    method: "DELETE",
-  });
-
-  return response.message;
+export async function toggleTask(id: string) {
+  await toggleTaskComplete(id);
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${id}`);
 }

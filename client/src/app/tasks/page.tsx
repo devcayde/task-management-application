@@ -1,17 +1,20 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { Plus } from "lucide-react";
 
-import { getTasks } from "@/actions/task.actions";
+import { getTasks } from "@/task-db";
 import { Button } from "@/components/ui/button";
-
-import { TaskCard } from "@/components/tasks/task-card";
 import { TaskSearch } from "@/components/tasks/task-search";
 import { TaskFilter } from "@/components/tasks/task-filter";
+import TaskDetail from "./task-detail";
 
-import type { TaskStatus } from "@/types/task";
+import type { Task, TaskStatus } from "@/types/task";
+
+export type { Task };
 
 interface TasksPageProps {
   searchParams: Promise<{
-    search?: string;
+    query?: string;
     status?: string;
     page?: string;
   }>;
@@ -20,7 +23,7 @@ interface TasksPageProps {
 export default async function TasksPage({ searchParams }: TasksPageProps) {
   const params = await searchParams;
 
-  const search = params.search;
+  const { query } = params;
 
   const status =
     params.status === "ACTIVE" ||
@@ -31,8 +34,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
 
   const page = params.page ? Number(params.page) : 1;
 
-  const result = await getTasks({
-    search,
+  const result = await getTasks(query, {
     status,
     page,
     limit: 10,
@@ -40,44 +42,39 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
 
   return (
     <main className="container mx-auto max-w-5xl px-6 py-10">
-      {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Tasks</h1>
-
           <p className="text-muted-foreground">Manage your tasks.</p>
         </div>
 
-        <Button>
-          <Link href="/tasks/new">Create Task</Link>
+        <Button render={<Link href="/tasks/new" />}>
+          <Plus data-icon="inline-start" />
+          Create Task
         </Button>
       </div>
 
-      {/* Search + Filter */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
-        <TaskSearch />
+        <Suspense fallback={null}>
+          <TaskSearch />
+        </Suspense>
 
-        <TaskFilter />
+        <Suspense fallback={null}>
+          <TaskFilter />
+        </Suspense>
       </div>
 
-      {/* Results */}
       {result.tasks.length === 0 ? (
         <div className="rounded-lg border p-10 text-center">
           <h2 className="font-semibold">No tasks found</h2>
-
           <p className="mt-1 text-sm text-muted-foreground">
             Try changing your search or filter.
           </p>
         </div>
       ) : (
-        <div className="grid gap-4">
-          {result.tasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </div>
+        <TaskDetail tasks={result.tasks} />
       )}
 
-      {/* Pagination */}
       {result.pagination.totalPages > 1 && (
         <div className="mt-8 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
@@ -86,13 +83,21 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
 
           <div className="flex gap-2">
             {result.pagination.page > 1 && (
-              <PaginationButton page={result.pagination.page - 1}>
+              <PaginationButton
+                page={result.pagination.page - 1}
+                query={query}
+                status={status}
+              >
                 Previous
               </PaginationButton>
             )}
 
             {result.pagination.page < result.pagination.totalPages && (
-              <PaginationButton page={result.pagination.page + 1}>
+              <PaginationButton
+                page={result.pagination.page + 1}
+                query={query}
+                status={status}
+              >
                 Next
               </PaginationButton>
             )}
@@ -105,25 +110,30 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
 
 function PaginationButton({
   page,
+  query,
+  status,
   children,
 }: {
   page: number;
+  query?: string;
+  status?: TaskStatus;
   children: React.ReactNode;
 }) {
+  const params = new URLSearchParams();
+
+  if (query) {
+    params.set("query", query);
+  }
+
+  if (status) {
+    params.set("status", status);
+  }
+
+  params.set("page", String(page));
+
   return (
     <Button variant="outline">
-      <Link
-        href={{
-          pathname: "/tasks",
-          query: {
-            search: undefined,
-            status: undefined,
-            page,
-          },
-        }}
-      >
-        {children}
-      </Link>
+      <Link href={`/tasks?${params.toString()}`}>{children}</Link>
     </Button>
   );
 }
