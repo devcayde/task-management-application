@@ -1,11 +1,6 @@
 "use server";
 
-import {
-  addTask,
-  deleteTask,
-  toggleTaskComplete,
-  updateTask,
-} from "@/task-db";
+import * as tasks from "@/lib/tasks";
 import { TaskStatus } from "@/types/task";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -34,7 +29,7 @@ export async function createTask(prevState: FormState, formData: FormData) {
     return { errors };
   }
 
-  await addTask(title, description ?? "");
+  await tasks.createTask(title, description ?? "");
 
   redirect("/tasks");
 }
@@ -62,18 +57,18 @@ export async function editTask(
     return { errors };
   }
 
-  await updateTask(id, title, description ?? "", status);
+  await tasks.updateTask(id, title, description ?? "", status);
 
   redirect("/tasks");
 }
 
-export async function removeTask(id: string) {
-  await deleteTask(id);
+export async function deleteTask(id: string) {
+  await tasks.deleteTask(id);
   revalidatePath("/tasks");
 }
 
 export async function toggleTask(id: string) {
-  await toggleTaskComplete(id);
+  await tasks.toggleTask(id);
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${id}`);
 }

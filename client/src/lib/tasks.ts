@@ -47,7 +47,7 @@ export async function getTask(id: string): Promise<Task | null> {
   }
 }
 
-export async function addTask(title: string, description: string) {
+export async function createTask(title: string, description: string) {
   const response = await api<ApiResponse<Task>>("/tasks", {
     method: "POST",
     body: JSON.stringify({ title, description }),
@@ -78,7 +78,7 @@ export async function deleteTask(id: string) {
   return response.message;
 }
 
-export async function toggleTaskComplete(id: string) {
+export async function toggleTask(id: string) {
   const response = await api<ApiResponse<Task>>(`/tasks/${id}/toggle`, {
     method: "PATCH",
   });

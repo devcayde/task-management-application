@@ -1,6 +1,6 @@
 "use client";
 
-import { removeTask, toggleTask } from "@/actions/task.actions";
+import { deleteTask, toggleTask } from "@/actions/task.actions";
 import { TaskStatusBadge } from "@/components/tasks/task-status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,9 +38,9 @@ export default function TaskDetail({ tasks }: { tasks: Task[] }) {
     },
   );
 
-  const removeTaskById = async (taskId: string) => {
+  const deleteTaskById = async (taskId: string) => {
     setOptimisticTasks({ type: "remove", taskId });
-    await removeTask(taskId);
+    await deleteTask(taskId);
   };
 
   const toggleTaskById = async (taskId: string) => {
@@ -102,7 +102,7 @@ export default function TaskDetail({ tasks }: { tasks: Task[] }) {
                 </Form>
               </div>
 
-              <Form action={removeTaskById.bind(null, task.id)}>
+              <Form action={deleteTaskById.bind(null, task.id)}>
                 <Button type="submit" size="sm" variant="destructive">
                   <Trash2 data-icon="inline-start" />
                   Delete

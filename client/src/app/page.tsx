@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { getTasks } from "@/task-db";
+import { getTasks } from "@/lib/tasks";
 import Link from "next/link";
 
 export default async function Home() {

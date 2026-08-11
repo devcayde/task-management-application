@@ -10,7 +10,7 @@ import {
 
 import { toggleTask } from "@/actions/task.actions";
 import { TaskStatusBadge } from "@/components/tasks/task-status-badge";
-import { getTask } from "@/task-db";
+import { getTask } from "@/lib/tasks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
