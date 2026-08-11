@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Plus } from "lucide-react";
 
-import { getTasks } from "@/task-db";
+import { getTasks } from "@/lib/tasks";
 import { Button } from "@/components/ui/button";
 import { TaskSearch } from "@/components/tasks/task-search";
 import { TaskFilter } from "@/components/tasks/task-filter";
